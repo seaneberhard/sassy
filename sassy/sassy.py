@@ -249,7 +249,7 @@ class SAS:
                 return s
         elif n == 9:
             if i == 1:
-                # (9, 24, [1, 1, 2, 3, 5, 5, 3, 2, 1, 1], True, False, 'C9 : C3')
+                # summary: (9, 24, [1, 1, 2, 3, 5, 5, 3, 2, 1, 1], True, False, 'C9 : C3')
                 s = SAS.orbital_scheme(TransitiveGroup(9, 6))
                 c1 = s.color_class(5) + s.color_class(6)
                 c2 = s.color_class(12) + s.color_class(13)
