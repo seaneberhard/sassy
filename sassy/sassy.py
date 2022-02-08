@@ -203,47 +203,37 @@ class SAS:
                      {2, 3, 4, 5}, {8, 2, 3, 5}, {2, 4, 5, 7}, {8, 2, 5, 7},
                      {3, 4, 5, 6}, {8, 3, 5, 6}, {4, 5, 6, 7}, {8, 5, 6, 7}]
             if i == 1:
-                # aut = (C_4 x C_2) : C_2
-                # ranks = [1, 1, 3, 4, 7, 4, 3, 1, 1], total = 25
-                # fact: 1 and 2 are refinements of 3
+                # summary: (8, 25, [1, 1, 3, 4, 7, 4, 3, 1, 1], True, False, '(C4 x C2) : C2')
                 s = SAS.orbital_scheme(TransitiveGroup(8, 15))  # affine group (Z/8Z) : (Z/8Z)^* of order 32
                 s.separate(half)
                 return s
             elif i == 2:
-                # aut = (C_4 x C_2) : C_2
-                # ranks = [1, 1, 4, 5, 8, 5, 4, 1, 1], total = 30
+                # summary: (8, 30, [1, 1, 4, 5, 8, 5, 4, 1, 1], True, False, '(C4 x C2) : C2')
                 s = SAS.orbital_scheme(PermutationGroup(['(2,6)(4,8)', '(1,2,5,6)(3,8,7,4)', '(1,3,5,7)(2,8,6,4)']))
                 s.separate(whole)
                 return s
             elif i == 3:
-                # aut = Q_8
-                # ranks = [1, 1, 3, 5, 8, 5, 3, 1, 1], total = 28
+                # summary: (8, 28, [1, 1, 3, 5, 8, 5, 3, 1, 1], True, False, 'Q8')
                 s = SAS.orbital_scheme(TransitiveGroup(8, 8))  # quasidihedral group of order 16
                 s.separate(half)
                 return s
             elif i == 4:
-                # aut = Q_8
-                # ranks = [1, 1, 4, 7, 10, 7, 4, 1, 1], total = 36
+                # summary: (8, 36, [1, 1, 4, 7, 10, 7, 4, 1, 1], True, False, 'Q8')
                 s = SAS.orbital_scheme(PermutationGroup(['(1,2,5,6)(3,8,7,4)', '(1,3,5,7)(2,4,6,8)']))
                 s.separate(whole)  # fusion
                 return s
             elif i == 5:
-                # aut = C_4 x C_2 (intransitive)
-                # ranks = [1, 1, 3, 5, 8, 5, 3, 1, 1], total = 28
+                # summary: (8, 28, [1, 1, 3, 5, 8, 5, 3, 1, 1], True, False, 'C4 x C2')
                 s = SAS.orbital_scheme(TransitiveGroup(8, 7))  # modular group of order 16
                 s.separate(half)
                 return s
             elif i == 6:
-                # inhomogeneous
-                # aut = C_4 x C_2 (intransitive)
-                # ranks = [1, 2, 6, 10, 13, 10, 6, 2, 1], total = 51
+                # summary: (8, 51, [1, 2, 6, 10, 13, 10, 6, 2, 1], False, False, 'C4 x C2')
                 s = SAS.orbital_scheme(PermutationGroup(['(2,6)(4,8)', '(1,3,5,7)(2,8,6,4)']))  # C_4 x C_2
                 s.separate(whole)  # fusion
                 return s
             elif i == 7:
-                # inhomogeneous
-                # aut = C_4 x C_2 (intransitive)
-                # ranks = [1, 2, 5, 8, 11, 8, 5, 2, 1], total = 43
+                # summary: (8, 43, [1, 2, 5, 8, 11, 8, 5, 2, 1], False, False, 'C4 x C2')
                 s = SAS.orbital_scheme(PermutationGroup(['(2,6)(4,8)', '(1,3,5,7)(2,8,6,4)']))  # C_4 x C_2
                 new_colors = [s.color_class(a) + s.color_class(b)
                               for a, b in [[3, 5], [11, 16], [12, 17], [20, 22], [25, 26], [27, 31]]]
@@ -251,9 +241,7 @@ class SAS:
                     s.separate(c)
                 return s
             elif i == 8:
-                # inhomogeneous
-                # aut = C_4 x C_2 (intransitive)
-                # ranks = [1, 2, 6, 9, 13, 9, 6, 2, 1], total = 49
+                # summary: (8, 49, [1, 2, 6, 9, 13, 9, 6, 2, 1], False, False, 'C4 x C2')
                 s = SAS.orbital_scheme(PermutationGroup(['(2,6)(4,8)', '(1,3,5,7)(2,8,6,4)']))  # C_4 x C_2
                 new_colors = [s.color_class(a) + s.color_class(b) for a, b in [[9, 13], [21, 29]]]
                 for c in new_colors:
@@ -261,19 +249,17 @@ class SAS:
                 return s
         elif n == 9:
             if i == 1:
-                # Aut = C_9 : C_3
-                # ranks = [1, 1, 2, 4, 5, 5, 4, 2, 1, 1], total = 26
-                s = SAS.orbital_scheme(TransitiveGroup(9, 6))
-                s.separate(s.color_class(9) + s.color_class(10))
-                return s
-            elif i == 2:
-                # Aut = C_9 : C_3
-                # ranks = [1, 1, 2, 3, 5, 5, 3, 2, 1, 1], total = 24
+                # (9, 24, [1, 1, 2, 3, 5, 5, 3, 2, 1, 1], True, False, 'C9 : C3')
                 s = SAS.orbital_scheme(TransitiveGroup(9, 6))
                 c1 = s.color_class(5) + s.color_class(6)
                 c2 = s.color_class(12) + s.color_class(13)
                 s.separate(c1)
                 s.separate(c2)
+                return s
+            elif i == 2:
+                # summary: (9, 26, [1, 1, 2, 4, 5, 5, 4, 2, 1, 1], True, False, 'C9 : C3')
+                s = SAS.orbital_scheme(TransitiveGroup(9, 6))
+                s.separate(s.color_class(9) + s.color_class(10))
                 return s
         raise NotImplementedError()
 
