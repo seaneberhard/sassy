@@ -3,7 +3,7 @@ import itertools
 from sage.all import *
 from tqdm.notebook import tqdm
 
-from union_find import find_orbits
+from .union_find import find_orbits
 
 
 class SAS:
