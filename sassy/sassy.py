@@ -291,7 +291,7 @@ class SAS:
             scheme.separate(des)
 
             while True:
-                # several quick checks which are must faster than a full WL step
+                # several quick checks which are much faster than a full WL step
                 if not scheme.is_homogeneous() and homogeneous_only:
                     break
                 if scheme.is_schurian():
