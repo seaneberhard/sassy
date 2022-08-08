@@ -127,7 +127,8 @@ class SAS:
             filter((lambda a: len(a) <= upper_limit) if k3 is None else (lambda a: len(a) == k3), chi))
         if k2 is None and k3 is None:
             triples = filter(lambda trip: len(trip[1]) <= len(trip[2]), triples)
-        for a, b, c in verbose_iter(list(triples), condition=log_progress, message='WL step:'):
+        description = 'full' if k1 is None and k2 is None and k3 is None else f'{k1}, {k2}, {k3}'
+        for a, b, c in verbose_iter(list(triples), condition=log_progress, message=f'WL step ({description}):'):
             t = ttype(a, b, c)
             data[a][t] = data[a].get(t, 0) + 1
         chi = {a: (chi[a],) + tuple(sorted(d.items())) for a, d in data.items()}
@@ -179,6 +180,7 @@ class SAS:
         return w
 
     def is_isomorphic_to(self, other, verbose=False):
+        #warning: very slow method
         return (self.ranks == other.ranks  # quick check 1
                 and self.is_schurian() == other.is_schurian()  # quick check 2
                 and self.automorphism_group().is_isomorphic(other.automorphism_group())  # quick check 3
@@ -296,11 +298,16 @@ class SAS:
                     break
                 if scheme.is_schurian():
                     yield scheme, k
-                    break
-                if any(scheme.wl_step(i, 0, triangles_only=triangles_only, log_progress=verbosity > 3) > 0
+                    break  # schurian scheme, therefore coherent
+                if any(scheme.wl_step(i, 0, triangles_only=False, log_progress=verbosity > 3) > 0
                        for i in range(1, k)):
-                    break
-                # do a full WL step
+                    # triangles_only = False is acceptable because k2 = None, so always equivalent to a triangle
+                    break  # some lower level has split, can abandon this case
+                if scheme.wl_step(k, k, triangles_only=triangles_only, log_progress=verbosity > 3) > 0:
+                    continue  # cheap rank increase, repeat quick checks
+                if len(set(scheme.chi[a] for a in des)) > 1:
+                    break  # cell given by des has split, abandon this case
+                # last resort: do a full WL step
                 if scheme.wl_step(triangles_only=triangles_only, log_progress=verbosity > 2) == 0:
                     yield scheme, k
                     break
