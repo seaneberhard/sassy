@@ -179,13 +179,13 @@ class SAS:
         w.relabel()
         return w
 
-    def is_isomorphic_to(self, other, verbose=False):
-        #warning: very slow method
-        return (self.ranks == other.ranks  # quick check 1
-                and self.is_schurian() == other.is_schurian()  # quick check 2
-                and self.automorphism_group().is_isomorphic(other.automorphism_group())  # quick check 3
-                and any(self == other.image(perm)
-                        for perm in verbose_iter(SymmetricGroup(self.n), verbose, 'checking for isomorphism')))
+    def to_incidence_structure(self):
+        return IncidenceStructure([a | Set([-i]) for i, alpha in enumerate(self.color_classes()) for a in alpha])
+
+    def is_isomorphic(self, other):
+        if self.ranks != other.ranks:
+            return False
+        return self.to_incidence_structure().is_isomorphic(other.to_incidence_structure())
 
     @classmethod
     def orbital_scheme(cls, group):
@@ -321,7 +321,7 @@ class SAS:
         for s, k in all_sas:
             for t, k1 in verbose_iter(s.refinements(starting_level=k, **kwargs), verbosity > 0,
                                       f'Searching for coherent refinements of {s}\nSummary: {s.summary()}'):
-                if check_for_dupes and any(t.is_isomorphic_to(t1, verbose=verbosity > 2) for t1, _ in all_sas):
+                if check_for_dupes and any(t.is_isomorphic(t1) for t1, _ in all_sas):
                     continue
                 if verbosity > 0:
                     print('Found:', t)
