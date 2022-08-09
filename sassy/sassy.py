@@ -292,21 +292,23 @@ class SAS:
             scheme = self.copy()
             scheme.separate(des)
 
+            small_rank = sum(scheme.ranks[:k])  # number of cells at level < k
+
             while True:
-                # several quick checks which are much faster than a full WL step
-                if not scheme.is_homogeneous() and homogeneous_only:
-                    break
+                # quick checks
+                if sum(scheme.ranks[:k]) > small_rank:
+                    break  # some lower level has split, abandon this case
+                if len(set(scheme.chi[a] for a in des)) > 1:
+                    break  # cell given by des has split, abandon this case
                 if scheme.is_schurian():
                     yield scheme, k
                     break  # schurian scheme, therefore coherent
-                if any(scheme.wl_step(i, 0, triangles_only=False, log_progress=verbosity > 3) > 0
-                       for i in range(1, k)):
-                    # triangles_only = False is acceptable because k2 = None, so always equivalent to a triangle
-                    break  # some lower level has split, can abandon this case
+                # try for cheap rank increase
+                if scheme.wl_step(None, 0, triangles_only=False, log_progress=verbosity > 3) > 0:
+                    # triangles_only = False is acceptable because k2 = 0, so always equivalent to a triangle
+                    continue
                 if scheme.wl_step(k, k, triangles_only=triangles_only, log_progress=verbosity > 3) > 0:
-                    continue  # cheap rank increase, repeat quick checks
-                if len(set(scheme.chi[a] for a in des)) > 1:
-                    break  # cell given by des has split, abandon this case
+                    continue
                 # last resort: do a full WL step
                 if scheme.wl_step(triangles_only=triangles_only, log_progress=verbosity > 2) == 0:
                     yield scheme, k
