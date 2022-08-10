@@ -1,3 +1,4 @@
+import functools
 import itertools
 
 from sage.all import *
@@ -69,12 +70,13 @@ class SAS:
         return self.n > 0 and self.ranks[1] == 1
 
     def automorphism_group(self):
+        """Compute the (strong) automorphism group."""
         if self.aut is None:
             aut = SymmetricGroup(self.n)
             for i in range(1, self.total_rank()):
                 relation = self.color_class(i)
-                aut = (IncidenceStructure(self.vertices, relation + [self.vertices])
-                       .automorphism_group().intersection(aut))
+                inc_struct = IncidenceStructure(self.vertices, relation + [self.vertices])
+                aut = aut.intersection(inc_struct.automorphism_group())
             self.aut = PermutationGroup(aut.gens(), domain=range(1, self.n + 1))  # ensure degree = n
         return self.aut
 
@@ -182,10 +184,24 @@ class SAS:
     def to_incidence_structure(self):
         return IncidenceStructure([a | Set([-i]) for i, alpha in enumerate(self.color_classes()) for a in alpha])
 
-    def is_isomorphic(self, other):
-        if self.ranks != other.ranks:
+    def is_isomorphic(self, other, verbose=False, algorithm=None):
+        """Test for (weak) isomorphism of two SAS.
+
+        Two methods are available: naive (default) or sage. The naive method is reliable but very slow, since it just
+        checks all permutations. The sage method makes an auxiliary incidence structure and then asks sage whether
+        they are isomorphic. Internally sage creates an auxiliary graph based on the incidence structure. The sage
+        method is better in theory but if n >= 8 sometimes it just hangs indefinitely, probably because the auxiliary
+        graphs are too large for sage to handle. Best not to rely on this method too much."""
+
+        if (self.ranks != other.ranks or self.is_schurian() != other.is_schurian()
+                or not self.automorphism_group().is_isomorphic(other.automorphism_group())):
             return False
-        return self.to_incidence_structure().is_isomorphic(other.to_incidence_structure())
+
+        if algorithm == 'sage' or algorithm is None and self.n < 8:
+            return self.to_incidence_structure().is_isomorphic(other.to_incidence_structure())
+        else:
+            return any(self == other.image(perm)
+                   for perm in verbose_iter(SymmetricGroup(self.n), verbose, 'Checking for isomorphism...'))
 
     @classmethod
     def orbital_scheme(cls, group):
@@ -265,10 +281,9 @@ class SAS:
                 return s
         raise NotImplementedError()
 
-    def refinements(self, homogeneous_only=False, triangles_only=True, starting_level=0, verbosity=0):
+    def refinements(self, triangles_only=True, starting_level=0, verbosity=0):
         """Search exhaustively for refinements (up to iso) obtainable by separating a single class and running WL.
         Warning: Yielded schemes may include repeats."""
-        starting_level = max(starting_level, 2 if homogeneous_only else 1)
         color_classes = self.color_classes()
         mono_designs = []
         for k in range(starting_level, self.n // 2 + 1):
@@ -315,21 +330,40 @@ class SAS:
                     break
 
     @classmethod
-    def find_all(cls, n, check_for_dupes=True, **kwargs):
-        verbosity = kwargs.get('verbosity', 0)
-        s = cls(n)
-        all_sas = [(s, 0)]
-        yield s
-        for s, k in all_sas:
-            for t, k1 in verbose_iter(s.refinements(starting_level=k, **kwargs), verbosity > 0,
-                                      f'Searching for coherent refinements of {s}\nSummary: {s.summary()}'):
-                if check_for_dupes and any(t.is_isomorphic(t1) for t1, _ in all_sas):
-                    continue
-                if verbosity > 0:
-                    print('Found:', t)
-                    print('Summary:', t.summary())
-                all_sas.append((t, k1))
-                yield t
+    def all_schurians(cls, n, homogeneous_only=False):
+        gps = TransitiveGroups(n) if homogeneous_only or n == 1 else SymmetricGroup(n).conjugacy_classes_subgroups()
+        schurians = []
+        for gp in gps:
+            s = SAS.orbital_scheme(gp)
+            if s.automorphism_group() == gp:  # check gp is set-closed
+                schurians.append(s)
+        return schurians
+
+    @classmethod
+    def find_all(cls, n, check_for_dupes=True, homogeneous_only=False, verbosity=0, **kwargs):
+        kwargs['verbosity'] = verbosity
+
+        starting_sas = [cls(n)]
+        if not homogeneous_only:
+            for p in Partitions(n):
+                if max(p) < n:
+                    s = functools.reduce(lambda x, y: x.cartesian_product(y), [SAS(m) for m in p])
+                    starting_sas.append(s)
+
+        for s in starting_sas:
+            yield s
+            refinements = [(s, 2)]
+            for s, k in refinements:
+                for t, k1 in verbose_iter(s.refinements(starting_level=k, **kwargs), verbosity > 0,
+                                          f'Searching for coherent refinements of {s}\nSummary: {s.summary()}'):
+                    if check_for_dupes and any(t.is_isomorphic(t1, verbose=verbosity > 1) for t1, _ in refinements):
+                        continue
+                    if verbosity > 0:
+                        print('Found:', t)
+                        print('Summary:', t.summary())
+                    refinements.append((t, k1))
+                    yield t
+
 
 
 def partition_to_mult(p):
