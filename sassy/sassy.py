@@ -279,6 +279,16 @@ class SAS:
                 s = SAS.orbital_scheme(TransitiveGroup(9, 6))
                 s.separate(s.color_class(9) + s.color_class(10))
                 return s
+            elif i == 3:
+                # summary: (9, 44, [1, 2, 4, 6, 9, 9, 6, 4, 2, 1], False, False, 'C4 x C2')
+                s = SAS.orbital_scheme(PermutationGroup(['(2,7)(3,5)', '(1,6)', '(1,8,6,4)(2,9,5,3)']))  # (C10 x C2) : C4
+                s.separate(
+                    [{1, 2, 3, 4}, {1, 2, 4, 5}, {8, 1, 2, 7}, {8, 1, 2, 9}, {1, 3, 4, 9}, {8, 1, 3, 5}, {8, 1, 3, 7},
+                     {1, 4, 5, 7}, {1, 4, 9, 7}, {8, 1, 5, 9}, {8, 2, 3, 6}, {2, 4, 6, 7}, {9, 2, 4, 6}, {8, 2, 5, 6},
+                     {3, 4, 5, 6}, {3, 4, 6, 7}, {8, 9, 3, 6}, {9, 4, 5, 6}, {8, 5, 6, 7}, {8, 9, 6, 7}])
+                return s
+            elif 4 <= i <= 11:
+                return cls.nonschurian_scheme(8, i-3).cartesian_product(SAS(1))
         raise NotImplementedError()
 
     def refinements(self, triangles_only=True, starting_level=0, verbosity=0):
