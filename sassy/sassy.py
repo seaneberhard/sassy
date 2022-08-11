@@ -3,6 +3,7 @@ import itertools
 import multiprocessing as mp
 
 from sage.all import *
+from tqdm.notebook import tqdm
 
 from .designs import designs
 from .union_find import find_orbits
