@@ -4,8 +4,7 @@ import multiprocessing as mp
 
 from sage.all import *
 
-from .designs import enumerate_designs_oop
-from .tools import verbose_iter
+from .designs import designs
 from .union_find import find_orbits
 
 
@@ -406,3 +405,21 @@ def wl_step_oop(n, chi, k1, k2, k3, aa, triangles_only, log_progress, q):
         t = ttype(a, b, c)
         data[a][t] = data[a].get(t, 0) + 1
     q.put(data)
+
+
+def enumerate_designs_oop(starting_level, n, color_classes, lower_colors, verbose, q):
+    des = []
+    for k in range(starting_level, n // 2 + 1):
+        des.extend(list(verbose_iter(itertools.chain(
+            *(designs(n, color_classes[idx], color_classes[:idx])
+              for idx in lower_colors
+              if len(color_classes[idx][0]) == k)),
+            verbose, f'Enumerating monochromatic designs on level {k}')))
+    q.put(des)
+
+
+def verbose_iter(iterator, condition, message):
+    if condition:
+        print(message)
+        return tqdm(iterator)
+    return iterator
