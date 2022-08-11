@@ -43,30 +43,3 @@ def find_orbits(gens, space, action):
     for x in space:
         orbits[uf.find(x)].add(x)
     return orbits
-
-
-# Dual structure
-class PartitionRefinement:
-    def __init__(self, X):
-        X = set(X)
-        self.clr = {x: 0 for x in X}
-        self.next_clr = 1
-        self.part = {0: X}
-
-    def find(self, x):
-        return self.clr[x]
-
-    def split(self, subset):
-        new_clr = {}
-        for x in subset:
-            c = self.find(x)
-            if c not in new_clr:
-                new_clr[c] = self.next_clr
-                self.part[self.next_clr] = set()
-                self.next_clr += 1
-            self.clr[x] = new_c = new_clr[c]
-            self.part[c].remove(x)
-            self.part[new_c].add(x)
-        for c in new_clr:
-            if len(self.part[c]) == 0:
-                del self.part[c]
