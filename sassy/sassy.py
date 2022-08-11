@@ -184,24 +184,18 @@ class SAS:
     def to_incidence_structure(self):
         return IncidenceStructure([a | Set([-i]) for i, alpha in enumerate(self.color_classes()) for a in alpha])
 
-    def is_isomorphic(self, other, verbose=False, algorithm=None):
+    def is_isomorphic(self, other):
         """Test for (weak) isomorphism of two SAS.
 
-        Two methods are available: naive (default) or sage. The naive method is reliable but very slow, since it just
-        checks all permutations. The sage method makes an auxiliary incidence structure and then asks sage whether
-        they are isomorphic. Internally sage creates an auxiliary graph based on the incidence structure. The sage
-        method is better in theory but if n >= 8 sometimes it just hangs indefinitely, probably because the auxiliary
-        graphs are too large for sage to handle. Best not to rely on this method too much."""
+        Warning: if you are sage version < 9.3 you may not bliss installed and this might be really slow. Otherwise
+        it should be OK up to n=12 or so."""
 
+        # quick checks
         if (self.ranks != other.ranks or self.is_schurian() != other.is_schurian()
                 or not self.automorphism_group().is_isomorphic(other.automorphism_group())):
             return False
 
-        if algorithm == 'sage' or algorithm is None and self.n < 8:
-            return self.to_incidence_structure().is_isomorphic(other.to_incidence_structure())
-        else:
-            return any(self == other.image(perm)
-                   for perm in verbose_iter(SymmetricGroup(self.n), verbose, 'Checking for isomorphism...'))
+        return self.to_incidence_structure().is_isomorphic(other.to_incidence_structure())
 
     @classmethod
     def orbital_scheme(cls, group):
@@ -366,7 +360,7 @@ class SAS:
             for s, k in refinements:
                 for t, k1 in verbose_iter(s.refinements(starting_level=k, **kwargs), verbosity > 0,
                                           f'Searching for coherent refinements of {s}\nSummary: {s.summary()}'):
-                    if check_for_dupes and any(t.is_isomorphic(t1, verbose=verbosity > 1) for t1, _ in refinements):
+                    if check_for_dupes and any(t.is_isomorphic(t1) for t1, _ in refinements):
                         continue
                     if verbosity > 0:
                         print('Found:', t)
@@ -439,7 +433,7 @@ def designs(n, color1, other_colors):
                 p.solve()
             except sage.numerical.mip.MIPSolverException as e:
                 # attempt to read the error message produced by different possible MILP backends
-                if 'no feasible solution' in str(e) or 'problem is infeasible' in str(e):
+                if 'no feasible solution' in str(e) or 'infeasible' in str(e):
                     break
                 raise e
             values = p.get_values(x)

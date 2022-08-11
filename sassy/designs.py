@@ -11,6 +11,10 @@ def isomorphic(des1, des2):
 def simple_designs(t, v, k, lamb, verbosity=0):
     """Search for all simple t-(v,k,lamb) designs.
     Method: one-point extension by integer-programming."""
+    if k <= 2:
+        if verbosity > 0:
+            print(f'Outsourcing {t}-({v}, {k}, {lamb}) to GAP...')
+        return gap_designs(t, v, k, lamb)
     designs = []
     if any(lamb * binomial(v-i, t-i) % binomial(k-i, t-i) != 0 for i in range(0, t)):
         return designs
@@ -32,7 +36,7 @@ def simple_designs(t, v, k, lamb, verbosity=0):
                     p.solve()
                 except sage.numerical.mip.MIPSolverException as e:
                     # attempt to read the error message produced by different possible MILP backends
-                    if 'no feasible solution' in str(e) or 'problem is infeasible' in str(e):
+                    if 'no feasible solution' in str(e) or 'infeasible' in str(e):
                         break
                     raise e
                 values = p.get_values(x)
@@ -46,3 +50,9 @@ def simple_designs(t, v, k, lamb, verbosity=0):
         if des not in output:
             output.append(des)
     return [[Set(block) for block in des.blocks()] for des in output]
+
+
+def gap_designs(t, v, k, lamb):
+    return [[Set([int(x) for x in block]) for block in des.attribute('blocks')]
+            for des in gap(f'BlockDesigns(rec(v:={v},blockSizes:=[{k}],tSubsetStructure:=rec(t:={t},'
+                           f'lambdas:=[{lamb}]),blockMaxMultiplicities:=[1]))')]
