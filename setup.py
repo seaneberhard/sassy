@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='sassy',
-      version='1.0.10',
+      version='1.0.11',
       packages=['sassy'],
       url='https://github.com/seaneberhard/sassy',
       license='MIT',
