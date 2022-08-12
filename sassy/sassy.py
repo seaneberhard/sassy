@@ -207,86 +207,6 @@ class SAS:
     def schurian_scheme(cls, group):
         return cls.orbital_scheme(group)
 
-    @classmethod
-    def nonschurian_scheme(cls, n, i):
-        if n == 8:
-            half = [{1, 2, 3, 4}, {8, 1, 2, 7}, {8, 1, 3, 6}, {1, 4, 6, 7},
-                    {8, 2, 3, 5}, {2, 4, 5, 7}, {3, 4, 5, 6}, {8, 5, 6, 7}]
-            whole = [{1, 2, 3, 4}, {8, 1, 2, 3}, {1, 2, 4, 7}, {8, 1, 2, 7},
-                     {1, 3, 4, 6}, {8, 1, 3, 6}, {1, 4, 6, 7}, {8, 1, 6, 7},
-                     {2, 3, 4, 5}, {8, 2, 3, 5}, {2, 4, 5, 7}, {8, 2, 5, 7},
-                     {3, 4, 5, 6}, {8, 3, 5, 6}, {4, 5, 6, 7}, {8, 5, 6, 7}]
-            if i == 1:
-                # summary: (8, 25, [1, 1, 3, 4, 7, 4, 3, 1, 1], True, False, '(C4 x C2) : C2')
-                s = SAS.orbital_scheme(TransitiveGroup(8, 15))  # affine group (Z/8Z) : (Z/8Z)^* of order 32
-                s.separate(half)
-                return s
-            elif i == 2:
-                # summary: (8, 30, [1, 1, 4, 5, 8, 5, 4, 1, 1], True, False, '(C4 x C2) : C2')
-                s = SAS.orbital_scheme(PermutationGroup(['(2,6)(4,8)', '(1,2,5,6)(3,8,7,4)', '(1,3,5,7)(2,8,6,4)']))
-                s.separate(whole)
-                return s
-            elif i == 3:
-                # summary: (8, 28, [1, 1, 3, 5, 8, 5, 3, 1, 1], True, False, 'Q8')
-                s = SAS.orbital_scheme(TransitiveGroup(8, 8))  # quasidihedral group of order 16
-                s.separate(half)
-                return s
-            elif i == 4:
-                # summary: (8, 36, [1, 1, 4, 7, 10, 7, 4, 1, 1], True, False, 'Q8')
-                s = SAS.orbital_scheme(PermutationGroup(['(1,2,5,6)(3,8,7,4)', '(1,3,5,7)(2,4,6,8)']))
-                s.separate(whole)  # fusion
-                return s
-            elif i == 5:
-                # summary: (8, 28, [1, 1, 3, 5, 8, 5, 3, 1, 1], True, False, 'C4 x C2')
-                s = SAS.orbital_scheme(TransitiveGroup(8, 7))  # modular group of order 16
-                s.separate(half)
-                return s
-            elif i == 6:
-                # summary: (8, 51, [1, 2, 6, 10, 13, 10, 6, 2, 1], False, False, 'C4 x C2')
-                s = SAS.orbital_scheme(PermutationGroup(['(2,6)(4,8)', '(1,3,5,7)(2,8,6,4)']))  # C_4 x C_2
-                s.separate(whole)  # fusion
-                return s
-            elif i == 7:
-                # summary: (8, 43, [1, 2, 5, 8, 11, 8, 5, 2, 1], False, False, 'C4 x C2')
-                s = SAS.orbital_scheme(PermutationGroup(['(2,6)(4,8)', '(1,3,5,7)(2,8,6,4)']))  # C_4 x C_2
-                new_colors = [s.color_class(a) + s.color_class(b)
-                              for a, b in [[3, 5], [11, 16], [12, 17], [20, 22], [25, 26], [27, 31]]]
-                for c in new_colors:
-                    s.separate(c)
-                return s
-            elif i == 8:
-                # summary: (8, 49, [1, 2, 6, 9, 13, 9, 6, 2, 1], False, False, 'C4 x C2')
-                s = SAS.orbital_scheme(PermutationGroup(['(2,6)(4,8)', '(1,3,5,7)(2,8,6,4)']))  # C_4 x C_2
-                new_colors = [s.color_class(a) + s.color_class(b) for a, b in [[9, 13], [21, 29]]]
-                for c in new_colors:
-                    s.separate(c)
-                return s
-        elif n == 9:
-            if i == 1:
-                # summary: (9, 24, [1, 1, 2, 3, 5, 5, 3, 2, 1, 1], True, False, 'C9 : C3')
-                s = SAS.orbital_scheme(TransitiveGroup(9, 6))
-                c1 = s.color_class(5) + s.color_class(6)
-                c2 = s.color_class(12) + s.color_class(13)
-                s.separate(c1)
-                s.separate(c2)
-                return s
-            elif i == 2:
-                # summary: (9, 26, [1, 1, 2, 4, 5, 5, 4, 2, 1, 1], True, False, 'C9 : C3')
-                s = SAS.orbital_scheme(TransitiveGroup(9, 6))
-                s.separate(s.color_class(9) + s.color_class(10))
-                return s
-            elif i == 3:
-                # summary: (9, 44, [1, 2, 4, 6, 9, 9, 6, 4, 2, 1], False, False, 'C4 x C2')
-                s = SAS.orbital_scheme(PermutationGroup(['(2,7)(3,5)', '(1,6)', '(1,8,6,4)(2,9,5,3)']))  # (C10 x C2) : C4
-                s.separate(
-                    [{1, 2, 3, 4}, {1, 2, 4, 5}, {8, 1, 2, 7}, {8, 1, 2, 9}, {1, 3, 4, 9}, {8, 1, 3, 5}, {8, 1, 3, 7},
-                     {1, 4, 5, 7}, {1, 4, 9, 7}, {8, 1, 5, 9}, {8, 2, 3, 6}, {2, 4, 6, 7}, {9, 2, 4, 6}, {8, 2, 5, 6},
-                     {3, 4, 5, 6}, {3, 4, 6, 7}, {8, 9, 3, 6}, {9, 4, 5, 6}, {8, 5, 6, 7}, {8, 9, 6, 7}])
-                return s
-            elif 4 <= i <= 11:
-                return cls.nonschurian_scheme(8, i-3).cartesian_product(SAS(1))
-        raise NotImplementedError()
-
     def refinements(self, triangles_only=True, starting_level=0, verbosity=0):
         """Search exhaustively for refinements (up to iso) obtainable by separating a single class and running WL.
         Warning: Yielded schemes may include repeats."""
@@ -369,6 +289,143 @@ class SAS:
                         print('Summary:', t.summary())
                     refinements.append((t, k1))
                     yield t
+
+    @classmethod
+    def nonschurian_scheme(cls, n, i):
+        """Growing census of nonschurian examples. Complete for n <= 8.
+        Examples which are cartesian products of smaller examples are excluded."""
+        if n == 8:
+            half = [{1, 2, 3, 4}, {8, 1, 2, 7}, {8, 1, 3, 6}, {1, 4, 6, 7}, {8, 2, 3, 5}, {2, 4, 5, 7}, {3, 4, 5, 6},
+                    {8, 5, 6, 7}]
+            whole = [{1, 2, 3, 4}, {8, 1, 2, 3}, {1, 2, 4, 7}, {8, 1, 2, 7}, {1, 3, 4, 6}, {8, 1, 3, 6}, {1, 4, 6, 7},
+                     {8, 1, 6, 7}, {2, 3, 4, 5}, {8, 2, 3, 5}, {2, 4, 5, 7}, {8, 2, 5, 7}, {3, 4, 5, 6}, {8, 3, 5, 6},
+                     {4, 5, 6, 7}, {8, 5, 6, 7}]
+            if i == 1:
+                # summary: (8, 25, [1, 1, 3, 4, 7, 4, 3, 1, 1], True, False, '(C4 x C2) : C2')
+                s = SAS.orbital_scheme(TransitiveGroup(8, 15))  # affine group (Z/8Z) : (Z/8Z)^* of order 32
+                s.separate(half)
+                return s
+            elif i == 2:
+                # summary: (8, 30, [1, 1, 4, 5, 8, 5, 4, 1, 1], True, False, '(C4 x C2) : C2')
+                s = SAS.orbital_scheme(PermutationGroup(['(2,6)(4,8)', '(1,2,5,6)(3,8,7,4)', '(1,3,5,7)(2,8,6,4)']))
+                s.separate(whole)
+                return s
+            elif i == 3:
+                # summary: (8, 28, [1, 1, 3, 5, 8, 5, 3, 1, 1], True, False, 'Q8')
+                s = SAS.orbital_scheme(TransitiveGroup(8, 8))  # quasidihedral group of order 16
+                s.separate(half)
+                return s
+            elif i == 4:
+                # summary: (8, 36, [1, 1, 4, 7, 10, 7, 4, 1, 1], True, False, 'Q8')
+                s = SAS.orbital_scheme(PermutationGroup(['(1,2,5,6)(3,8,7,4)', '(1,3,5,7)(2,4,6,8)']))
+                s.separate(whole)  # fusion
+                return s
+            elif i == 5:
+                # summary: (8, 28, [1, 1, 3, 5, 8, 5, 3, 1, 1], True, False, 'C4 x C2')
+                s = SAS.orbital_scheme(TransitiveGroup(8, 7))  # modular group of order 16
+                s.separate(half)
+                return s
+            elif i == 6:
+                # summary: (8, 51, [1, 2, 6, 10, 13, 10, 6, 2, 1], False, False, 'C4 x C2')
+                s = SAS.orbital_scheme(PermutationGroup(['(2,6)(4,8)', '(1,3,5,7)(2,8,6,4)']))  # C_4 x C_2
+                s.separate(whole)  # fusion
+                return s
+            elif i == 7:
+                # summary: (8, 43, [1, 2, 5, 8, 11, 8, 5, 2, 1], False, False, 'C4 x C2')
+                s = SAS.orbital_scheme(PermutationGroup(['(2,6)(4,8)', '(1,3,5,7)(2,8,6,4)']))  # C_4 x C_2
+                new_colors = [s.color_class(a) + s.color_class(b)
+                              for a, b in [[3, 5], [11, 16], [12, 17], [20, 22], [25, 26], [27, 31]]]
+                for c in new_colors:
+                    s.separate(c)
+                return s
+            elif i == 8:
+                # summary: (8, 49, [1, 2, 6, 9, 13, 9, 6, 2, 1], False, False, 'C4 x C2')
+                s = SAS.orbital_scheme(PermutationGroup(['(2,6)(4,8)', '(1,3,5,7)(2,8,6,4)']))  # C_4 x C_2
+                new_colors = [s.color_class(a) + s.color_class(b) for a, b in [[9, 13], [21, 29]]]
+                for c in new_colors:
+                    s.separate(c)
+                return s
+        elif n == 9:
+            if i == 1:
+                # summary: (9, 24, [1, 1, 2, 3, 5, 5, 3, 2, 1, 1], True, False, 'C9 : C3')
+                s = SAS.orbital_scheme(TransitiveGroup(9, 6))
+                c1 = s.color_class(5) + s.color_class(6)
+                c2 = s.color_class(12) + s.color_class(13)
+                s.separate(c1)
+                s.separate(c2)
+                return s
+            elif i == 2:
+                # summary: (9, 26, [1, 1, 2, 4, 5, 5, 4, 2, 1, 1], True, False, 'C9 : C3')
+                s = SAS.orbital_scheme(TransitiveGroup(9, 6))
+                s.separate(s.color_class(9) + s.color_class(10))
+                return s
+            elif i == 3:
+                # summary: (9, 44, [1, 2, 4, 6, 9, 9, 6, 4, 2, 1], False, False, 'C4 x C2')
+                s = SAS.orbital_scheme(PermutationGroup(['(2,7)(3,5)', '(1,6)', '(1,8,6,4)(2,9,5,3)']))  # (C10 x C2) : C4
+                s.separate(
+                    [{1, 2, 3, 4}, {1, 2, 4, 5}, {8, 1, 2, 7}, {8, 1, 2, 9}, {1, 3, 4, 9}, {8, 1, 3, 5}, {8, 1, 3, 7},
+                     {1, 4, 5, 7}, {1, 4, 9, 7}, {8, 1, 5, 9}, {8, 2, 3, 6}, {2, 4, 6, 7}, {9, 2, 4, 6}, {8, 2, 5, 6},
+                     {3, 4, 5, 6}, {3, 4, 6, 7}, {8, 9, 3, 6}, {9, 4, 5, 6}, {8, 5, 6, 7}, {8, 9, 6, 7}])
+                return s
+        elif n == 10:
+            if i == 1:
+                # summary: (10, 22, [1, 1, 2, 2, 3, 4, 3, 2, 2, 1, 1], True, False, 'C8 : C2')
+                s = SAS.orbital_scheme(TransitiveGroup(10, 43))
+                s.separate(({1, 2, 3, 4, 5}, {1, 2, 3, 4, 6}, {1, 2, 3, 4, 8}, {1, 2, 3, 5, 10}, {1, 2, 3, 6, 7},
+                            {1, 2, 3, 6, 9}, {1, 2, 3, 7, 8}, {1, 2, 3, 8, 10}, {1, 2, 3, 9, 10}, {1, 2, 4, 5, 7},
+                            {1, 2, 4, 5, 8}, {1, 2, 4, 6, 9}, {1, 2, 4, 7, 9}, {1, 2, 4, 7, 10}, {1, 2, 4, 9, 10},
+                            {1, 2, 5, 6, 8}, {1, 2, 5, 6, 9}, {1, 2, 5, 6, 10}, {1, 2, 5, 7, 10}, {1, 2, 5, 8, 9},
+                            {1, 2, 6, 7, 8}, {1, 2, 6, 7, 10}, {1, 2, 7, 8, 9}, {1, 2, 8, 9, 10}, {1, 3, 4, 5, 6},
+                            {1, 3, 4, 6, 10}, {1, 3, 4, 7, 8}, {1, 3, 4, 7, 10}, {1, 3, 4, 8, 9}, {1, 3, 4, 9, 10},
+                            {1, 3, 5, 6, 8}, {1, 3, 5, 8, 10}, {1, 3, 6, 7, 10}, {1, 3, 6, 8, 9}, {1, 3, 6, 8, 10},
+                            {1, 4, 5, 6, 7}, {1, 4, 5, 6, 10}, {1, 4, 5, 8, 9}, {1, 4, 5, 8, 10}, {1, 4, 5, 9, 10},
+                            {1, 4, 6, 7, 8}, {1, 4, 6, 7, 9}, {1, 4, 6, 8, 9}, {1, 4, 7, 8, 10}, {1, 5, 6, 7, 8},
+                            {1, 5, 6, 9, 10}, {1, 5, 7, 8, 10}, {1, 6, 7, 9, 10}, {1, 6, 8, 9, 10}, {1, 7, 8, 9, 10},
+                            {2, 3, 4, 5, 9}, {2, 3, 4, 5, 10}, {2, 3, 4, 6, 7}, {2, 3, 4, 7, 9}, {2, 3, 4, 7, 10},
+                            {2, 3, 4, 8, 9}, {2, 3, 5, 6, 7}, {2, 3, 5, 6, 8}, {2, 3, 5, 6, 10}, {2, 3, 5, 7, 8},
+                            {2, 3, 5, 8, 9}, {2, 3, 6, 8, 9}, {2, 3, 6, 9, 10}, {2, 3, 7, 8, 10}, {2, 3, 7, 9, 10},
+                            {2, 4, 5, 6, 7}, {2, 4, 5, 6, 9}, {2, 4, 5, 7, 8}, {2, 4, 5, 9, 10}, {2, 4, 7, 8, 9},
+                            {2, 5, 6, 7, 9}, {2, 5, 7, 8, 10}, {2, 5, 7, 9, 10}, {2, 5, 8, 9, 10}, {2, 6, 7, 8, 9},
+                            {2, 6, 7, 9, 10}, {3, 4, 5, 6, 8}, {3, 4, 5, 6, 9}, {3, 4, 5, 7, 8}, {3, 4, 5, 7, 10},
+                            {3, 4, 5, 8, 10}, {3, 4, 6, 7, 8}, {3, 4, 6, 7, 9}, {3, 4, 6, 9, 10}, {3, 4, 8, 9, 10},
+                            {3, 5, 6, 7, 10}, {3, 5, 6, 9, 10}, {3, 5, 8, 9, 10}, {3, 6, 7, 8, 9}, {3, 6, 7, 8, 10},
+                            {3, 7, 8, 9, 10}, {4, 5, 6, 7, 10}, {4, 5, 6, 8, 9}, {4, 5, 7, 8, 9}, {4, 5, 7, 9, 10},
+                            {4, 6, 7, 9, 10}, {4, 7, 8, 9, 10}, {5, 6, 7, 8, 9}, {5, 6, 7, 8, 10}, {5, 6, 8, 9, 10}))
+                return s
+            elif i == 2:
+                # summary: (10, 24, [1, 1, 2, 2, 4, 4, 4, 2, 2, 1, 1], True, False, '(C4 x C2) : C2')
+                s = SAS.orbital_scheme(TransitiveGroup(10, 43))
+                s.separate([{1, 2, 3, 4}, {10, 1, 2, 3}, {1, 2, 4, 7}, {1, 2, 5, 6}, {8, 1, 2, 5}, {1, 2, 6, 7},
+                            {8, 1, 2, 9}, {1, 2, 10, 9}, {1, 3, 4, 6}, {8, 1, 3, 6}, {8, 1, 10, 3}, {8, 1, 4, 5},
+                            {1, 10, 4, 5}, {1, 4, 6, 9}, {8, 1, 4, 7}, {1, 10, 4, 9}, {1, 10, 5, 6}, {1, 10, 6, 7},
+                            {8, 1, 6, 9}, {8, 1, 10, 7}, {2, 3, 4, 5}, {10, 2, 3, 5}, {2, 3, 6, 7}, {9, 2, 3, 6},
+                            {8, 2, 3, 7}, {8, 9, 2, 3}, {9, 2, 4, 5}, {9, 2, 4, 7}, {9, 2, 5, 6}, {8, 2, 5, 7},
+                            {2, 10, 5, 7}, {9, 2, 10, 7}, {3, 4, 5, 6}, {8, 3, 4, 7}, {10, 3, 4, 7}, {8, 9, 3, 4},
+                            {9, 10, 3, 4}, {8, 3, 5, 6}, {8, 10, 3, 5}, {10, 3, 6, 7}, {9, 10, 3, 6}, {4, 5, 6, 7},
+                            {10, 4, 5, 7}, {8, 9, 4, 5}, {9, 4, 6, 7}, {8, 5, 6, 7}, {9, 10, 5, 6}, {8, 9, 10, 5},
+                            {8, 9, 6, 7}, {8, 9, 10, 7}])
+                s.separate([{1, 2, 3, 4, 5}, {1, 2, 3, 4, 6}, {1, 2, 3, 4, 7}, {1, 2, 3, 4, 10}, {1, 2, 3, 5, 10},
+                            {1, 2, 3, 6, 7}, {1, 2, 3, 8, 9}, {1, 2, 3, 8, 10}, {1, 2, 3, 9, 10}, {1, 2, 4, 5, 8},
+                            {1, 2, 4, 6, 7}, {1, 2, 4, 7, 8}, {1, 2, 4, 7, 9}, {1, 2, 4, 9, 10}, {1, 2, 5, 6, 7},
+                            {1, 2, 5, 6, 8}, {1, 2, 5, 6, 9}, {1, 2, 5, 6, 10}, {1, 2, 5, 7, 8}, {1, 2, 5, 8, 9},
+                            {1, 2, 6, 7, 10}, {1, 2, 6, 8, 9}, {1, 2, 7, 9, 10}, {1, 2, 8, 9, 10}, {1, 3, 4, 5, 6},
+                            {1, 3, 4, 6, 8}, {1, 3, 4, 6, 9}, {1, 3, 4, 7, 8}, {1, 3, 4, 9, 10}, {1, 3, 5, 6, 8},
+                            {1, 3, 5, 8, 10}, {1, 3, 6, 7, 10}, {1, 3, 6, 8, 9}, {1, 3, 6, 8, 10}, {1, 3, 7, 8, 10},
+                            {1, 4, 5, 6, 10}, {1, 4, 5, 7, 8}, {1, 4, 5, 7, 10}, {1, 4, 5, 8, 9}, {1, 4, 5, 8, 10},
+                            {1, 4, 5, 9, 10}, {1, 4, 6, 7, 9}, {1, 4, 6, 8, 9}, {1, 4, 6, 9, 10}, {1, 4, 7, 8, 10},
+                            {1, 5, 6, 7, 10}, {1, 5, 6, 9, 10}, {1, 6, 7, 8, 9}, {1, 6, 7, 8, 10}, {1, 7, 8, 9, 10},
+                            {2, 3, 4, 5, 6}, {2, 3, 4, 5, 9}, {2, 3, 4, 5, 10}, {2, 3, 4, 7, 8}, {2, 3, 4, 8, 9},
+                            {2, 3, 5, 6, 9}, {2, 3, 5, 7, 8}, {2, 3, 5, 7, 10}, {2, 3, 5, 8, 10}, {2, 3, 6, 7, 8},
+                            {2, 3, 6, 7, 9}, {2, 3, 6, 7, 10}, {2, 3, 6, 8, 9}, {2, 3, 6, 9, 10}, {2, 3, 7, 8, 9},
+                            {2, 4, 5, 6, 9}, {2, 4, 5, 7, 9}, {2, 4, 5, 7, 10}, {2, 4, 5, 8, 9}, {2, 4, 6, 7, 9},
+                            {2, 4, 7, 9, 10}, {2, 5, 6, 7, 8}, {2, 5, 6, 9, 10}, {2, 5, 7, 8, 10}, {2, 5, 7, 9, 10},
+                            {2, 7, 8, 9, 10}, {3, 4, 5, 6, 7}, {3, 4, 5, 6, 8}, {3, 4, 5, 7, 10}, {3, 4, 5, 8, 9},
+                            {3, 4, 6, 7, 10}, {3, 4, 6, 9, 10}, {3, 4, 7, 8, 9}, {3, 4, 7, 8, 10}, {3, 4, 7, 9, 10},
+                            {3, 4, 8, 9, 10}, {3, 5, 6, 7, 8}, {3, 5, 6, 8, 10}, {3, 5, 6, 9, 10}, {3, 5, 8, 9, 10},
+                            {3, 6, 7, 9, 10}, {4, 5, 6, 7, 8}, {4, 5, 6, 7, 9}, {4, 5, 6, 7, 10}, {4, 5, 8, 9, 10},
+                            {4, 6, 7, 8, 9}, {5, 6, 7, 8, 9}, {5, 6, 8, 9, 10}, {5, 7, 8, 9, 10}, {6, 7, 8, 9, 10}])
+                return s
+        raise NotImplementedError()
 
 
 
