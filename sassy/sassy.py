@@ -315,7 +315,7 @@ class SAS:
             except NotImplementedError:
                 return ls
 
-    def dump(self, filename):
+    def save(self, filename):
         json_dumpable_list = [[[int(x) for x in a] for a in alpha] for alpha in self.color_classes()]
         with open(filename, 'w') as f:
             json.dump(json_dumpable_list, f)
