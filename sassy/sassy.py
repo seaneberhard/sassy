@@ -294,24 +294,20 @@ class SAS:
 
     @classmethod
     def nonschurian_scheme(cls, n, i):
-        """Census of known nonschurian examples. Cartesian products of smaller examples are excluded.
-        Currently the example of degree 12 is only suspected to be coherent."""
+        """Census of known nonschurian examples. Cartesian products of smaller examples are excluded."""
         filename = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'library', f'{n}-{i}.json')
         try:
             return cls.load(filename)
         except FileNotFoundError:
-            pass
-        raise NotImplementedError()
+            raise NotImplementedError(f'{n}-{i} is not in the library')
 
     @classmethod
     def nonschurian_schemes(cls, n):
-        """Census of known nonschurian examples. Cartesian products of smaller examples are excluded.
-        Currently the example of degree 12 is only suspected to be coherent."""
+        """Census of known nonschurian examples. Cartesian products of smaller examples are excluded."""
         ls = []
         while True:
             try:
-                i = len(ls) + 1
-                ls.append(cls.nonschurian_scheme(n, i))
+                ls.append(cls.nonschurian_scheme(n, len(ls) + 1))
             except NotImplementedError:
                 return ls
 
