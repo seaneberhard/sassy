@@ -9,8 +9,6 @@ from tqdm.notebook import tqdm
 from .union_find import find_orbits
 
 
-use_gap = True
-
 class SAS:
     def __init__(self, n, sets=None):
         self.n = n
@@ -97,7 +95,7 @@ class SAS:
         return self.total_rank() == num_orbits(self.automorphism_group())
 
     def summary(self):
-        aut_structure = self.automorphism_group().structure_description() if use_gap else None
+        aut_structure = self.automorphism_group().structure_description()
         return self.n, self.total_rank(), self.ranks, self.is_homogeneous(), self.is_schurian(), aut_structure
 
     def separate(self, family):
@@ -108,36 +106,22 @@ class SAS:
         self.relabel()
         self.aut = None
 
-    def wl_step(self, k1=None, k2=None, k3=None, aut_aware=True, triangles_only=True, log_progress=False):
+    def wl_step(self, k1=None, k2=None, k3=None, aut_aware=True, log_progress=False):
         """One step of Weisfeiler--Leman. Return rank increase."""
         old_rank = self.total_rank()
-        chi = self.chi
-        if triangles_only:
-            upper_limit = self.n
-
-            def ttype(x, y, z):
-                if (x | y | z).issubset(x & y | x & z | y & z):  # is it a triangle?
-                    return chi[y], chi[z], len(x & y & z)
-                else:
-                    return ()  # not a triangle
-        else:
-            upper_limit = self.n / 2  # only need to check full coherence up to here
-
-            def ttype(x, y, z):
-                return chi[y], chi[z], len(x & y), len(x & z), len(y & z), len(x & y & z)
         aut_classes = set_orbits(self.automorphism_group()) if aut_aware else {x: {x} for x in self.cube}
-        data = {a: dict() for a in aut_classes}
+        structure = {a: dict() for a in aut_classes}  # structure constants / intersection numbers
         triples = itertools.product(
-            filter((lambda a: len(a) <= upper_limit) if k1 is None else (lambda a: len(a) == k1), data),
-            filter((lambda a: len(a) <= upper_limit) if k2 is None else (lambda a: len(a) == k2), chi),
-            filter((lambda a: len(a) <= upper_limit) if k3 is None else (lambda a: len(a) == k3), chi))
+            filter((lambda a: len(a) <= self.n / 2) if k1 is None else (lambda a: len(a) == k1), aut_classes),
+            filter((lambda a: len(a) <= self.n / 2) if k2 is None else (lambda a: len(a) == k2), self.chi),
+            filter((lambda a: len(a) <= self.n / 2) if k3 is None else (lambda a: len(a) == k3), self.chi))
         if k2 is None and k3 is None:
-            triples = filter(lambda trip: len(trip[1]) <= len(trip[2]), triples)
+            triples = filter(lambda triple: len(triple[1]) <= len(triple[2]), triples)
         description = 'full' if k1 is None and k2 is None and k3 is None else f'{k1}, {k2}, {k3}'
         for a, b, c in verbose_iter(list(triples), condition=log_progress, message=f'WL step ({description}):'):
-            t = ttype(a, b, c)
-            data[a][t] = data[a].get(t, 0) + 1
-        chi = {a: (chi[a],) + tuple(sorted(d.items())) for a, d in data.items()}
+            triple_type = self.chi[b], self.chi[c], len(a & b), len(a & c), len(b & c), len(a & b & c)
+            structure[a][triple_type] = structure[a].get(triple_type, 0) + 1
+        chi = {a: (self.chi[a],) + tuple(sorted(d.items())) for a, d in structure.items()}
         chi = {ai: chi[a] for a, ais in aut_classes.items() for ai in ais}
         chi = {a: (chi[a], chi[self.vertices - a]) for a in chi}  # symmetrize
         self.chi = chi
@@ -209,7 +193,7 @@ class SAS:
     def schurian_scheme(cls, group):
         return cls.orbital_scheme(group)
 
-    def refinements(self, triangles_only=True, starting_level=0, verbosity=0):
+    def refinements(self, starting_level=0, verbosity=0):
         """Search exhaustively for refinements (up to iso) obtainable by separating a single class and running WL.
         Warning: Yielded schemes may include repeats."""
         color_classes = self.color_classes()
@@ -230,7 +214,7 @@ class SAS:
 
         for des in verbose_iter(
                 mono_designs, verbosity > 0,
-                f'Testing {len(mono_designs)} designs with WL...' + (' (triangles only)' if triangles_only else '')):
+                f'Testing {len(mono_designs)} designs with WL...'):
             k = len(next(iter(des)))
             scheme = self.copy()
             scheme.separate(des)
@@ -247,13 +231,12 @@ class SAS:
                     yield scheme, k
                     break  # schurian scheme, therefore coherent
                 # try for cheap rank increase
-                if scheme.wl_step(None, 0, triangles_only=False, log_progress=verbosity > 3) > 0:
-                    # triangles_only = False is acceptable because k2 = 0, so always equivalent to a triangle
+                if scheme.wl_step(None, 0, log_progress=verbosity > 3) > 0:
                     continue
-                if scheme.wl_step(k, k, triangles_only=triangles_only, log_progress=verbosity > 3) > 0:
+                if scheme.wl_step(k, k, log_progress=verbosity > 3) > 0:
                     continue
                 # last resort: do a full WL step
-                if scheme.wl_step(triangles_only=triangles_only, log_progress=verbosity > 2) == 0:
+                if scheme.wl_step(log_progress=verbosity > 2) == 0:
                     yield scheme, k
                     break
 
@@ -299,7 +282,8 @@ class SAS:
         try:
             return cls.load(filename)
         except FileNotFoundError:
-            raise NotImplementedError(f'{n}-{i} is not in the library')
+            pass
+        raise NotImplementedError(f'{n}-{i} is not in the library')
 
     @classmethod
     def nonschurian_schemes(cls, n):
