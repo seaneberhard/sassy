@@ -193,6 +193,17 @@ class SAS:
     def schurian_scheme(cls, group):
         return cls.orbital_scheme(group)
 
+    @classmethod
+    def schurian_schemes(cls, n, homogeneous_only=False):
+        if homogeneous_only or n == 1:
+            gps = TransitiveGroups(n)
+        else:
+            gps = SymmetricGroup(n).conjugacy_classes_subgroups()
+        for gp in gps:
+            s = SAS.orbital_scheme(gp)
+            if s.automorphism_group() == gp:  # check gp is set-closed
+                yield s
+
     def refinements(self, starting_level=0, verbosity=0):
         """Search exhaustively for refinements (up to iso) obtainable by separating a single class and running WL.
         Warning: Yielded schemes may include repeats."""
@@ -241,16 +252,6 @@ class SAS:
                     break
 
     @classmethod
-    def all_schurians(cls, n, homogeneous_only=False):
-        gps = TransitiveGroups(n) if homogeneous_only or n == 1 else SymmetricGroup(n).conjugacy_classes_subgroups()
-        schurians = []
-        for gp in gps:
-            s = SAS.orbital_scheme(gp)
-            if s.automorphism_group() == gp:  # check gp is set-closed
-                schurians.append(s)
-        return schurians
-
-    @classmethod
     def find_all(cls, n, check_for_dupes=True, homogeneous_only=False, verbosity=0, **kwargs):
         kwargs['verbosity'] = verbosity
 
@@ -288,12 +289,11 @@ class SAS:
     @classmethod
     def nonschurian_schemes(cls, n):
         """Census of known nonschurian examples. Cartesian products of smaller examples are excluded."""
-        ls = []
-        while True:
+        for i in itertools.count(1):
             try:
-                ls.append(cls.nonschurian_scheme(n, len(ls) + 1))
+                yield cls.nonschurian_scheme(n, i)
             except NotImplementedError:
-                return ls
+                return
 
     def save(self, filename):
         json_dumpable_list = [[[int(x) for x in a] for a in alpha] for alpha in self.color_classes()]
