@@ -277,23 +277,30 @@ class SAS:
                     yield t
 
     @classmethod
-    def nonschurian_scheme(cls, n, i):
+    def nonschurian_scheme(cls, n, i, homogeneous_only=False):
         """Census of known nonschurian examples. Cartesian products of smaller examples are excluded."""
-        filename = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'library', f'{n}-{i}.json')
-        try:
-            return cls.load(filename)
-        except FileNotFoundError:
-            pass
+        subdirs = ['homogeneous', 'inhomogeneous']
+        if homogeneous_only:
+            subdirs = subdirs[:1]
+        for subdir in subdirs:
+            filename = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'library', subdir, f'{n}-{i}.json')
+            try:
+                return cls.load(filename)
+            except FileNotFoundError:
+                pass
         raise NotImplementedError(f'{n}-{i} is not in the library')
 
     @classmethod
-    def nonschurian_schemes(cls, n):
+    def nonschurian_schemes(cls, n, homogeneous_only=False):
         """Census of known nonschurian examples. Cartesian products of smaller examples are excluded."""
         for i in itertools.count(1):
             try:
-                yield cls.nonschurian_scheme(n, i)
+                s = cls.nonschurian_scheme(n, i)
             except NotImplementedError:
                 return
+            if homogeneous_only and not s.is_homogeneous():
+                continue
+            yield s
 
     def save(self, filename):
         json_dumpable_list = [[[int(x) for x in a] for a in alpha] for alpha in self.color_classes()]
