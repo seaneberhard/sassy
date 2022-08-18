@@ -204,7 +204,7 @@ class SAS:
             if s.automorphism_group() == gp:  # check gp is set-closed
                 yield s
 
-    def refinements(self, starting_level=0, verbosity=0):
+    def refinements(self, starting_level=0, verbosity=0, quick_checks_only=False):
         """Search exhaustively for refinements (up to iso) obtainable by separating a single class and running WL.
         Warning: Yielded schemes may include repeats."""
         color_classes = self.color_classes()
@@ -244,6 +244,9 @@ class SAS:
                 # try for cheap rank increase
                 if scheme.wl_step(None, 0, log_progress=verbosity > 3) > 0:
                     continue
+                if quick_checks_only:
+                    yield scheme, k
+                    break
                 if scheme.wl_step(k, k, log_progress=verbosity > 3) > 0:
                     continue
                 # last resort: do a full WL step
