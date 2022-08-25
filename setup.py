@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='sassy',
-      version='1.1.0',
+      version='1.2.0',
       packages=['sassy'],
       include_package_data=True,
       # package_data={'sassy': ['library/*/*.json']},

@@ -4,6 +4,9 @@ import json
 import os
 
 from sage.all import *
+from sage.combinat.designs.incidence_structures import IncidenceStructure
+from sage.groups.perm_gps.permgroup import PermutationGroup
+from sage.groups.perm_gps.permgroup_named import SymmetricGroup, TransitiveGroups
 from tqdm.notebook import tqdm
 
 from .union_find import find_orbits
@@ -194,14 +197,14 @@ class SAS:
         return cls.orbital_scheme(group)
 
     @classmethod
-    def schurian_schemes(cls, n, homogeneous_only=False):
+    def schurian_schemes(cls, n, homogeneous_only=True):
         if homogeneous_only or n == 1:
             gps = TransitiveGroups(n)
         else:
             gps = SymmetricGroup(n).conjugacy_classes_subgroups()
         for gp in gps:
-            s = SAS.orbital_scheme(gp)
-            if s.automorphism_group() == gp:  # check gp is set-closed
+            s = cls.orbital_scheme(gp)
+            if s.automorphism_group().order() == gp.order():  # check gp is set-closed
                 yield s
 
     def refinements(self, starting_level=0, verbosity=0, quick_checks_only=False):
@@ -294,16 +297,13 @@ class SAS:
         raise NotImplementedError(f'{n}-{i} is not in the library')
 
     @classmethod
-    def nonschurian_schemes(cls, n, homogeneous_only=False):
+    def nonschurian_schemes(cls, n, homogeneous_only=True):
         """Census of known nonschurian examples. Cartesian products of smaller examples are excluded."""
         for i in itertools.count(1):
             try:
-                s = cls.nonschurian_scheme(n, i)
+                yield cls.nonschurian_scheme(n, i, homogeneous_only=homogeneous_only)
             except NotImplementedError:
                 return
-            if homogeneous_only and not s.is_homogeneous():
-                continue
-            yield s
 
     def save(self, filename):
         json_dumpable_list = [[[int(x) for x in a] for a in alpha] for alpha in self.color_classes()]

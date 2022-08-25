@@ -34,6 +34,7 @@ class UnionFind:
 
 def find_orbits(gens, space, action):
     """find orbits of a general group action"""
+    space = list(space)
     uf = UnionFind(space)
     for g in gens:
         for x in space:
