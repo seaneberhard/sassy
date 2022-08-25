@@ -202,7 +202,7 @@ class VAS:
 
     def save(self, filename):
         with open(filename, 'w') as f:
-            json.dump(self.color_class(), f)
+            json.dump(self.color_classes(), f)
 
     @classmethod
     def load(cls, filename):
