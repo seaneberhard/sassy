@@ -7,8 +7,8 @@ from sage.all import *
 from sage.combinat.designs.incidence_structures import IncidenceStructure
 from sage.groups.perm_gps.permgroup import PermutationGroup
 from sage.groups.perm_gps.permgroup_named import SymmetricGroup, TransitiveGroups
-from tqdm.notebook import tqdm
 
+from .tools import verbose_iter
 from .union_find import find_orbits
 
 
@@ -348,13 +348,6 @@ def set_orbits(group, k=None):
         cube,
         lambda g, x: cube(set(map(g, x)))
     )
-
-
-def verbose_iter(iterator, condition, message):
-    if condition:
-        print(message)
-        return tqdm(iterator)
-    return iterator
 
 
 def designs(n, color1, other_colors):

@@ -6,6 +6,7 @@ from sage.all import *
 from sage.groups.perm_gps.permgroup import PermutationGroup
 from sage.groups.perm_gps.permgroup_named import SymmetricGroup, TransitiveGroups
 
+from .tools import verbose_iter
 from .union_find import find_orbits
 
 
@@ -21,7 +22,7 @@ class VAS:
         self.weak_aut = None
 
     def relabel(self):
-        """recompute ranks and rename colors 0,...,total_rank-1"""
+        """recompute ranks and rename colors 0,...,rank-1"""
         self.ranks = {level: 0 for level in self.ranks}
         color_map = {}
         next_color = 0
@@ -47,10 +48,8 @@ class VAS:
         return all(other.chi[x] == other.chi[c[0]] for c in self.color_classes() for x in c[1:])
 
     def image(self, perm):
-        im = VAS(self.d, self.k)
-        perm_inv = perm.inverse()
-        im.chi = {x: self.chi[perm_inv(x)] for x in self.cube}
-        im.relabel()
+        im = VAS(self.k, self.d)
+        im.separate([[perm(v) for v in cell] for cell in self.color_classes()])
         return im
 
     def color_classes(self):
@@ -129,6 +128,25 @@ class VAS:
     def wl_full(self, **kwargs):
         while self.wl_step(**kwargs) > 0:
             pass
+
+    def biregulate(self, aut_aware=True, log_progress=False):
+        """One step of Weisfeiler--Leman. Return rank increase."""
+        old_rank = self.rank()
+        aut_classes = vector_orbits(self.k, self.automorphism_group()) if aut_aware else {x: {x} for x in self.cube}
+        structure = {a: dict() for a in aut_classes}  # structure constants / intersection numbers
+        pairs = list(itertools.product(aut_classes, self.cube))
+        for a, b in verbose_iter(pairs, condition=log_progress, message=f'checking biregularity'):
+            diff_type = tuple(sorted(ai - bi for ai, bi in zip(a, b))), self.chi[b]
+            structure[a][diff_type] = structure[a].get(diff_type, 0) + 1
+        chi = {a: (self.chi[a],) + tuple(sorted(d.items())) for a, d in structure.items()}
+        chi = {ai: chi[a] for a, ais in aut_classes.items() for ai in ais}
+        self.chi = chi
+        self.relabel()
+        if log_progress:
+            print(f'Rank: {old_rank} --> {self.rank()}')
+        rank_diff = self.rank() - old_rank
+        assert rank_diff >= 0, 'WL decreased rank. That should never happen.'
+        return rank_diff
 
     def copy(self):
         return self.image(lambda x: x)
