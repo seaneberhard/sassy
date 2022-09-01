@@ -1,4 +1,4 @@
 from .sassy import SAS
 from .vassy import VAS
 
-__version__ = '1.2.4'
+__version__ = '1.2.5'

@@ -3,9 +3,9 @@
 from setuptools import setup
 
 setup(name='sassy',
-      version='1.2.4',
+      version='1.2.5',
       packages=['sassy'],
-      include_package_data=True,
+      package_data={'sassy': ['library/*/*.json']},
       url='https://github.com/seaneberhard/sassy',
       license='MIT',
       author='Sean Eberhard',
