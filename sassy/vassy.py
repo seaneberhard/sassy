@@ -3,8 +3,10 @@ import json
 import os
 
 from sage.all import *
+from sage.combinat.partition import Partitions
 from sage.groups.perm_gps.permgroup import PermutationGroup
 from sage.groups.perm_gps.permgroup_named import SymmetricGroup, TransitiveGroups
+from sage.numerical.mip import MixedIntegerLinearProgram, MIPSolverException
 
 from .tools import verbose_iter
 from .union_find import find_orbits
@@ -90,17 +92,21 @@ class VAS:
         If the scheme is schurian, this is the normalizer of the automorphism group in Sym(n).
         Warning: Naive implementation."""
         if self.weak_aut is None:
-            cc = self.color_classes()
-            g_list = []
-            for g in SymmetricGroup(self.d):
-                for c in cc:
-                    c_image = [g(v) for v in c]
-                    color = self.chi[c_image[0]]
-                    if not all(self.chi[v] == color for v in c_image[1:]):
-                        break
-                else:
-                    g_list.append(g)
-            self.weak_aut = PermutationGroup(g_list, domain=range(1, self.d+1))
+            if self.is_schurian():
+                self.weak_aut = SymmetricGroup(self.d).normalizer(self.automorphism_group())
+            else:
+                # naive implementation
+                cc = self.color_classes()
+                g_list = []
+                for g in SymmetricGroup(self.d):
+                    for c in cc:
+                        c_image = [g(v) for v in c]
+                        color = self.chi[c_image[0]]
+                        if not all(self.chi[v] == color for v in c_image[1:]):
+                            break
+                    else:
+                        g_list.append(g)
+                self.weak_aut = PermutationGroup(g_list, domain=range(1, self.d+1))
         return self.weak_aut
 
     def is_schurian(self):
@@ -119,6 +125,7 @@ class VAS:
             self.chi.update({v: f'_{i}^c' for v in complement})
         self.relabel()
         self.aut = None
+        self.weak_aut = None
 
 
     def wl_step(self, aut_aware=True, log_progress=False):
@@ -136,8 +143,8 @@ class VAS:
         structure = {a: dict() for a in aut_classes}  # structure constants / intersection numbers
         pairs = list(itertools.product(aut_classes, self.cube))
         for a, b in verbose_iter(pairs, condition=log_progress, message=f'checking biregularity'):
-            diff_type = tuple(sorted(ai - bi for ai, bi in zip(a, b))), self.chi[b]
-            structure[a][diff_type] = structure[a].get(diff_type, 0) + 1
+            pair_type = diff_type(a, b), self.chi[b]
+            structure[a][pair_type] = structure[a].get(pair_type, 0) + 1
         chi = {a: (self.chi[a],) + tuple(sorted(d.items())) for a, d in structure.items()}
         chi = {ai: chi[a] for a, ais in aut_classes.items() for ai in ais}
         self.chi = chi
@@ -172,10 +179,60 @@ class VAS:
             if s.automorphism_group().order() == gp.order():  # check gp is k-set-closed
                 yield s
 
-    def refinements(self, starting_level=0, verbosity=0, quick_checks_only=False):
-        """Search exhaustively for refinements (up to iso) obtainable by separating a single class and running WL.
-        Warning: Yielded schemes may include repeats."""
-        raise NotImplementedError()
+    def level_reps(self):
+        """List of representatives of Sym(k+1)-orbits of levels"""
+        reps = []
+
+        for p in Partitions(self.d, max_length=self.k + 1):
+            rep = ()
+            for mult, x in zip(p, range(self.k + 1)):
+                rep += (x,) * mult
+            reps.append(rep)
+
+        reps = sorted(reps, key=max)
+        return reps
+
+    def refinements(self, level=0, verbosity=0):
+        """Search exhaustively for refinements (up to iso) obtainable by splitting off a cell and biregulating.
+        The cell will be split from the nominated level, and it is required earlier cells do not split during the
+        biregulate process. Yielded schemes may include repeats."""
+        reps = self.level_reps()
+        lower_cells = [cell for cell in self.color_classes() if tuple(sorted(cell[0])) in reps[:level]]
+        cells_to_split = [cell for cell in self.color_classes() if reps[level] in cell]
+        cells_to_separate = []
+        for i, cell in enumerate(cells_to_split):
+            cells_to_separate.extend(list(verbose_iter(
+                designs(self.k, self.d, cell, lower_cells + cells_to_separate[:i]),
+                verbosity > 1,
+                f'Enumerating designs in cell [{cell[0]}]')))
+
+        # discard isomorphs
+        cells_to_separate = find_orbits(
+            gens=self.weak_automorphism_group().gens(),
+            space=[frozenset(cell) for cell in cells_to_separate],
+            action=lambda g, cell: frozenset(g(v) for v in cell)
+        )
+
+        for design in verbose_iter(cells_to_separate, verbosity > 0,
+                                 f'Testing {len(cells_to_separate)} designs with biregulate...'):
+            scheme = self.copy()
+            scheme.separate([design])
+
+            lower_rank = sum(scheme.ranks[rep] for rep in reps[:level])  # number of cells in lower levels
+
+            while True:
+                # quick checks
+                if sum(scheme.ranks[rep] for rep in reps[:level]) > lower_rank:
+                    break  # some lower level has split, abandon this case
+                if len(set(scheme.chi[v] for v in design)) > 1:
+                    break  # given cell has split, abandon this case
+                if scheme.is_schurian():
+                    yield scheme
+                    break  # schurian scheme, therefore coherent
+                # do a biregulate step
+                if scheme.biregulate(log_progress=verbosity > 3) == 0:
+                    yield scheme
+                    break
 
     @classmethod
     def find_all(cls, k, d, homogeneous_only=False, verbosity=0, **kwargs):
@@ -220,3 +277,37 @@ def vector_orbits(k, group):
     d = group.degree()
     cube = itertools.product(range(k+1), repeat=d)
     return find_orbits(group.gens(), cube, lambda g, x: g(x))
+
+
+def diff_type(v, w):
+    return tuple(sorted(vi - wi for vi, wi in zip(v, w)))
+
+
+def designs(k, d, cell, other_cells):
+    """Search for all 'designs' in the given cell. By convention we only look for <= half-sized designs. A design
+    is defined to be a subset of the cell such that for every cell2 in other_cells, the bipartite graphs defined by
+    cell and other_cells and a given difference type are all biregular. This definition is analogous to the definition
+    of a combinatorial t-design."""
+    for size in range(1, len(cell) // 2 + 1):
+        p = MixedIntegerLinearProgram()
+        x = p.new_variable(binary=True)
+        d = p.new_variable(integer=True)
+        p.add_constraint(sum(x[v] for v in cell) == size)
+        for i, cell2 in enumerate(other_cells):
+            for w in cell2:
+                types = set(diff_type(v, w) for v in cell)
+                for t in types:
+                    p.add_constraint(sum(x[v] for v in cell if diff_type(v, w) == t) == d[(i, t)])
+
+        while True:
+            try:
+                p.solve()
+            except MIPSolverException as e:
+                # attempt to read the error message produced by different possible MILP backends
+                if 'no feasible solution' in str(e) or 'infeasible' in str(e):
+                    break
+                raise e
+            values = p.get_values(x)
+            soln = [v for v in cell if values[v] > 0]
+            yield soln
+            p.add_constraint(sum(x[v] for v in soln) <= size - 1)
