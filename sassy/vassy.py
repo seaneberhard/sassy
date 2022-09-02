@@ -202,7 +202,7 @@ class VAS:
         cells_to_separate = []
         for i, cell in enumerate(cells_to_split):
             cells_to_separate.extend(list(verbose_iter(
-                designs(self.k, self.d, cell, lower_cells + cells_to_separate[:i]),
+                designs(cell, lower_cells + cells_to_separate[:i]),
                 verbosity > 1,
                 f'Enumerating designs in cell [{cell[0]}]')))
 
@@ -283,7 +283,7 @@ def diff_type(v, w):
     return tuple(sorted(vi - wi for vi, wi in zip(v, w)))
 
 
-def designs(k, d, cell, other_cells):
+def designs(cell, other_cells):
     """Search for all 'designs' in the given cell. By convention we only look for <= half-sized designs. A design
     is defined to be a subset of the cell such that for every cell2 in other_cells, the bipartite graphs defined by
     cell and other_cells and a given difference type are all biregular. This definition is analogous to the definition
