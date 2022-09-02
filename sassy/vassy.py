@@ -208,7 +208,7 @@ class VAS:
 
         # discard isomorphs
         cells_to_separate = find_orbits(
-            gens=self.weak_automorphism_group().gens(),
+            gens=self.automorphism_group().gens(),
             space=[frozenset(cell) for cell in cells_to_separate],
             action=lambda g, cell: frozenset(g(v) for v in cell)
         )
