@@ -168,11 +168,14 @@ class VAS:
             if s.automorphism_group().order() == gp.order():  # check gp is k-set-closed
                 yield s
 
+    def level_reps(self):
+        return level_reps(self.k, self.d)
+
     def refinements(self, level=0, verbosity=0):
         """Search exhaustively for refinements (up to iso) obtainable by splitting off a cell and biregulating.
         The cell will be split from the nominated level, and it is required earlier cells do not split during the
         biregulate process. Yielded schemes may include repeats."""
-        reps = level_reps(self.k, self.d)
+        reps = self.level_reps()
         lower_cells = [cell for cell in self.color_classes() if level_rep(cell[0]) in reps[:level]]
         cells_to_split = [cell for cell in self.color_classes() if reps[level] in cell]
         cells_to_separate = []
