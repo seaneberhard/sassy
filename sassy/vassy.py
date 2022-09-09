@@ -63,17 +63,6 @@ class VAS:
     def color_class(self, i):
         return [x for x in self.chi if self.chi[x] == i]
 
-    def lower_colors(self):
-        """A color is called lower if it is <= its complementary color. This method returns the lower colors."""
-        cc = self.color_classes()
-        indices = []
-        for idx, c in enumerate(cc):
-            v = c[0]
-            v_complement = tuple(self.k - vi for vi in v)
-            if idx <= self.chi[v_complement]:
-                indices.append(idx)
-        return indices
-
     def is_homogeneous(self):
         return self.d > 0 and self.ranks[(0,) * (self.d-1) + (1,)] == 1
 
@@ -142,7 +131,7 @@ class VAS:
         aut_classes = vector_orbits(self.k, self.automorphism_group()) if aut_aware else {x: {x} for x in self.cube}
         structure = {a: dict() for a in aut_classes}  # structure constants / intersection numbers
         pairs = list(itertools.product(aut_classes, self.cube))
-        for a, b in verbose_iter(pairs, condition=log_progress, message=f'checking biregularity'):
+        for a, b in verbose_iter(pairs, condition=log_progress, message=f'Checking biregularity'):
             pair_type = diff_type(a, b), self.chi[b]
             structure[a][pair_type] = structure[a].get(pair_type, 0) + 1
         chi = {a: (self.chi[a],) + tuple(sorted(d.items())) for a, d in structure.items()}
@@ -179,25 +168,12 @@ class VAS:
             if s.automorphism_group().order() == gp.order():  # check gp is k-set-closed
                 yield s
 
-    def level_reps(self):
-        """List of representatives of Sym(k+1)-orbits of levels"""
-        reps = []
-
-        for p in Partitions(self.d, max_length=self.k + 1):
-            rep = ()
-            for mult, x in zip(p, range(self.k + 1)):
-                rep += (x,) * mult
-            reps.append(rep)
-
-        reps = sorted(reps, key=max)
-        return reps
-
     def refinements(self, level=0, verbosity=0):
         """Search exhaustively for refinements (up to iso) obtainable by splitting off a cell and biregulating.
         The cell will be split from the nominated level, and it is required earlier cells do not split during the
         biregulate process. Yielded schemes may include repeats."""
-        reps = self.level_reps()
-        lower_cells = [cell for cell in self.color_classes() if tuple(sorted(cell[0])) in reps[:level]]
+        reps = level_reps(self.k, self.d)
+        lower_cells = [cell for cell in self.color_classes() if level_rep(cell[0]) in reps[:level]]
         cells_to_split = [cell for cell in self.color_classes() if reps[level] in cell]
         cells_to_separate = []
         for i, cell in enumerate(cells_to_split):
@@ -281,6 +257,24 @@ def vector_orbits(k, group):
 
 def diff_type(v, w):
     return tuple(sorted(vi - wi for vi, wi in zip(v, w)))
+
+
+def partition_to_rep(p):
+    rep = ()
+    for x, mult in enumerate(p):
+        rep += (x,) * mult
+    return rep
+
+
+def level_rep(v):
+    k = max(v)
+    p = sorted([v.count(i) for i in range(k+1)])[::-1]
+    return partition_to_rep(p)
+
+
+def level_reps(k, d):
+    """List of representatives of Sym(k+1)-orbits of levels"""
+    return sorted([partition_to_rep(p) for p in Partitions(d, max_length=k + 1)], key=max)
 
 
 def designs(cell, other_cells):
