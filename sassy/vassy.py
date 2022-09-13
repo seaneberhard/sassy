@@ -301,7 +301,7 @@ def designs(d, k, cell, other_cells):
                     constraints[b].append(a)
 
     constraints = list(constraints.values())
-    g = gcd(len(con) for con in constraints)
+    g = gcd([len(con) for con in constraints])
     for d in divisors(g):
         if d == 1:
             continue
