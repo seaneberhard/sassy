@@ -181,7 +181,7 @@ class VAS:
         cells_to_separate = []
         for i, cell in enumerate(cells_to_split):
             cells_to_separate.extend(list(verbose_iter(
-                designs(cell, lower_cells + cells_to_separate[:i]),
+                designs(self.d, self.k, cell, lower_cells + cells_to_separate[:i]),
                 verbosity > 1,
                 f'Enumerating designs in cell [{cell[0]}]')))
 
@@ -280,32 +280,50 @@ def level_reps(k, d):
     return sorted([partition_to_rep(p) for p in Partitions(d, max_length=k + 1)], key=max)
 
 
-def designs(cell, other_cells):
+def designs(d, k, cell, other_cells):
     """Search for all 'designs' in the given cell. By convention we only look for <= half-sized designs. A design
     is defined to be a subset of the cell such that for every cell2 in other_cells, the bipartite graphs defined by
-    cell and other_cells and a given difference type are all biregular. This definition is analogous to the definition
-    of a combinatorial t-design."""
-    for size in range(1, len(cell) // 2 + 1):
+    cell and other_cells and a given support-one difference type are all biregular. This definition is analogous to the
+    definition of a combinatorial t-design. We assume that the initial cell is a already a design in this sense."""
+    constraints = {}
+
+    lower_elts = set(b for other_cell in other_cells for b in other_cell)
+
+    for a in cell:
+        for i in range(d):
+            for bi in range(0, k+1):
+                b = list(a)
+                b[i] = bi
+                b = tuple(b)
+                if b in lower_elts:
+                    if b not in constraints:
+                        constraints[b] = []
+                    constraints[b].append(a)
+
+    constraints = list(constraints.values())
+    g = gcd(len(con) for con in constraints)
+    for d in divisors(g):
+        if d == 1:
+            continue
         p = MixedIntegerLinearProgram()
         x = p.new_variable(binary=True)
-        d = p.new_variable(integer=True)
-        p.add_constraint(sum(x[v] for v in cell) == size)
-        for i, cell2 in enumerate(other_cells):
-            for w in cell2:
-                types = set(diff_type(v, w) for v in cell)
-                for t in types:
-                    if sum(1 for ti in t if ti != 0) == 1:
-                        p.add_constraint(sum(x[v] for v in cell if diff_type(v, w) == t) == d[(i, t)])
+        for row in constraints:
+            p.add_constraint(sum(x[i] for i in row) == len(row) / g)
+        yield from gen_01_solns(p, x)
 
-        while True:
-            try:
-                p.solve()
-            except MIPSolverException as e:
-                # attempt to read the error message produced by different possible MILP backends
-                if 'no feasible solution' in str(e) or 'infeasible' in str(e):
-                    break
-                raise e
-            values = p.get_values(x)
-            soln = [v for v in cell if values[v] > 0]
-            yield soln
-            p.add_constraint(sum(x[v] for v in soln) <= size - 1)
+
+def gen_01_solns(p, x):
+    """Generate all binary solutions to IP given by p with variable x. It is assumed that the solutions form an
+    antichain, so that each previous solution can be avoided by adding one constraint."""
+    while True:
+        try:
+            p.solve()
+        except MIPSolverException as e:
+            # attempt to read the error message produced by different possible MILP backends
+            if 'no feasible solution' in str(e) or 'infeasible' in str(e):
+                break
+            raise e
+        values = p.get_values(x)
+        soln = [v for v in x.keys() if values[v] > 0]
+        yield soln
+        p.add_constraint(sum(x[v] for v in soln) <= len(soln) - 1)
