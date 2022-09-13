@@ -308,7 +308,7 @@ def designs(d, k, cell, other_cells):
         p = MixedIntegerLinearProgram()
         x = p.new_variable(binary=True)
         for row in constraints:
-            p.add_constraint(sum(x[i] for i in row) == len(row) / g)
+            p.add_constraint(sum(x[i] for i in row) == len(row) / d)
         yield from gen_01_solns(p, x)
 
 
