@@ -294,7 +294,7 @@ def designs(cell, other_cells):
             for w in cell2:
                 types = set(diff_type(v, w) for v in cell)
                 for t in types:
-                    if sum(1 for ti in t if ti > 0) == 1:
+                    if sum(1 for ti in t if ti != 0) == 1:
                         p.add_constraint(sum(x[v] for v in cell if diff_type(v, w) == t) == d[(i, t)])
 
         while True:
