@@ -311,14 +311,16 @@ def designs(d, k, cell, other_cells):
                     constraints[b].append(a)
 
     constraints = list(constraints.values())
-    g = gcd([len(con) for con in constraints])
-    for d in divisors(g):
-        if d == 1:
-            continue
+    # constraints indicate that we should be X-Y biregular against some lower cell
+    # In the case of the original cell we have X = len(row), so Y = len(row) * len(lower_cell) / len(cell).
+    # Hence in the case of the new cell we have Y = same and X = len(row) * len(new_cell) / len(cell)
+    # Therefore the size of the new cell must be divisible by all the len(cell) / gcd(len(row), len(cell))
+    m = lcm([len(cell) / gcd(len(cell), len(con)) for con in constraints])
+    for size in range(m, len(cell) // 2 + 1, m):
         p = MixedIntegerLinearProgram()
         x = p.new_variable(binary=True)
         for row in constraints:
-            p.add_constraint(sum(x[i] for i in row) == len(row) / d)
+            p.add_constraint(sum(x[i] for i in row) == len(row) * size / len(cell))
         yield from gen_01_solns(p, x)
 
 
