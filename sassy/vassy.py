@@ -129,15 +129,25 @@ class VAS:
         """One step of Weisfeiler--Leman. Return rank increase."""
         old_rank = self.rank()
         aut_classes = vector_orbits(self.k, self.automorphism_group()) if aut_aware else {x: {x} for x in self.cube}
-        structure = {a: dict() for a in aut_classes}  # structure constants / intersection numbers
-        pairs = list(itertools.product(aut_classes, self.cube))
-        for a, b in verbose_iter(pairs, condition=log_progress, message=f'Checking biregularity'):
-            pair_type = diff_type(a, b), self.chi[b]
-            structure[a][pair_type] = structure[a].get(pair_type, 0) + 1
+
+        structure = {a: dict() for a in aut_classes}  # restricted structure constants
+        # structure[a] will be a dictionary color --> count
+        # where count = number of b's of that color such that b-a has singleton support
+        # constancy of this count is equivalent to biregularity
+        triples = itertools.product(aut_classes, range(self.d), range(self.k+1))
+        for a, i, bi in verbose_iter(triples, condition=log_progress, message=f'Checking biregularity',
+                                     total=int(len(aut_classes) * self.d * (self.k+1))):
+            b = list(a)
+            b[i] = bi
+            b = tuple(b)
+            color = self.chi[b]
+            structure[a][color] = structure[a].get(color, 0) + 1
+
         chi = {a: (self.chi[a],) + tuple(sorted(d.items())) for a, d in structure.items()}
         chi = {ai: chi[a] for a, ais in aut_classes.items() for ai in ais}
         self.chi = chi
         self.relabel()
+
         if log_progress:
             print(f'Rank: {old_rank} --> {self.rank()}')
         rank_diff = self.rank() - old_rank

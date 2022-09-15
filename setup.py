@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='sassy',
-      version='1.3.8',
+      version='1.3.9',
       packages=['sassy'],
       package_data={'sassy': ['library/*/*.json']},
       url='https://github.com/seaneberhard/sassy',
