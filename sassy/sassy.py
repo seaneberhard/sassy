@@ -98,8 +98,14 @@ class SAS:
         return self.total_rank() == num_orbits(self.automorphism_group())
 
     def summary(self):
-        aut_structure = self.automorphism_group().structure_description()
-        return self.n, self.total_rank(), self.ranks, self.is_homogeneous(), self.is_schurian(), aut_structure
+        return {
+            'n': self.n,
+            'rank': self.total_rank(),
+            'level ranks': self.ranks,
+            'homogeneous': self.is_homogeneous(),
+            'schurian': self.is_schurian(),
+            'automorphism group': self.automorphism_group().structure_description()
+        }
 
     def separate(self, family):
         """separate off family and its opposite as their own color classes (can also be used to join)"""

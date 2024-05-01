@@ -102,8 +102,14 @@ class VAS:
         return self.rank() == len(vector_orbits(self.k, self.automorphism_group()))
 
     def summary(self):
-        aut_structure = self.automorphism_group().structure_description()
-        return self.k, self.d, self.rank(), self.is_homogeneous(), self.is_schurian(), aut_structure
+        return {
+            'k': self.k,
+            'd': self.d,
+            'rank': self.rank(),
+            'homogeneous': self.is_homogeneous(),
+            'schurian': self.is_schurian(),
+            'automorphism group': self.automorphism_group().structure_description()
+        }
 
     def separate(self, cells):
         """separate off cells and their oppositesas their own color classes (can also be used to join)"""
